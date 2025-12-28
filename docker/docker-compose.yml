@@ -1,0 +1,21 @@
+services:
+  mongodb:
+    # Use standard MongoDB image
+    image: mongo:8.2.3
+    container_name: mongodb
+    ports:
+      # Map local port 27007 to container port 27017
+      - "27007:27017"
+    volumes:
+      # Persist data in a local folder
+      - ./mongodb_data:/data/db
+    networks:
+      - backend
+    restart: always  
+networks:
+  backend:
+  
+    # environment:
+    #   MONGODB_DATABASE: admin
+    #   MONGODB_USER: admin
+    #   MONGODB_PASSWORD: admin
