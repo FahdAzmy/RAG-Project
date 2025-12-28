@@ -33,7 +33,7 @@ class DataController(BaseController):
             random_key = self.generate_random_string()
             new_file_path = os.path.join(project_path, random_key + "_" + clean_file_name)
         
-        return new_file_path,random_key
+        return new_file_path, random_key + "_" + clean_file_name
     
     def get_clean_file_name(self, orig_file_name: str) -> str:
         # Remove all chars except alphanumeric, underscore, and dots

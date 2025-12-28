@@ -2,10 +2,12 @@ from fastapi import APIRouter, Depends, UploadFile, status
 from fastapi.responses import JSONResponse
 import os
 from src.helpers.config import get_settings, Settings
-from src.controllers import DataController, ProjectController
+from src.controllers import DataController, ProjectController,ProcessController
 import aiofiles
 from src.models import ResponseSignal
 import logging
+from .schemes.data import ProcessRequset
+
 logger =logging.getLogger("uvicorn.error")
 
 router = APIRouter(
@@ -20,11 +22,11 @@ async def upload_data(
     file: UploadFile,
     app_settings: Settings = Depends(get_settings)
 ):
-    # Validate file type and size
+    # Step 1: Validate file type and size to ensure it's allowed
     data_controller = DataController()
     data_controller.validate_upload_file(file)
     
-    # Generate unique file path
+    # Step 2: Generate a unique name for the file and get its storage path
     file_path, file_id = data_controller.generate_unique_filepath(file.filename, project_id)
     
     # Save file in chunks (handles large files efficiently)
@@ -44,3 +46,30 @@ async def upload_data(
         status_code=status.HTTP_200_OK,
         content={"signal": ResponseSignal.FILE_UPLOADED_SUCCESSFULLY.value, "file_id": file_id}
     )
+    
+@router.post("/process/{project_id}")
+async def process_endpoint(
+    project_id: str,
+    request: ProcessRequset,
+    app_settings: Settings = Depends(get_settings)
+):
+    # Step 1: Get processing parameters from the request
+    file_id = request.file_id
+    chunk_size = request.chunk_size
+    overlap_size = request.overlap_size
+    
+    # Step 2: Load the file content based on project and file ID
+    process_controller = ProcessController(project_id)
+    file_content = process_controller.get_file_content(file_id)
+    
+    # Step 3: Split content into chunks for RAG processing
+    file_chunks = process_controller.process_file_content(file_content, file_id, chunk_size, overlap_size)
+    # If no chunks were produced, return an error
+    if file_chunks is None or len(file_chunks) == 0:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"signal": ResponseSignal.FILE_PROCESSED_FAILED.value}
+        )
+    
+    # Return the successfully processed chunks
+    return file_chunks
