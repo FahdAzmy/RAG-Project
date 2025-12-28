@@ -22,18 +22,18 @@ class DataController(BaseController):
         if file.size > self.app_settings.FILE_MAX_SIZE * self.size_scale:
             raise HTTPException(status_code=400, detail=ResponseSignal.FILE_SIZE_TOO_LARGE.value)
     
-    def generate_unique_filename(self, orig_file_name: str, project_id: str) -> str:
-        random_filename = self.generate_random_string()
+    def generate_unique_filepath(self, orig_file_name: str, project_id: str) -> str:
+        random_key = self.generate_random_string()
         project_path = ProjectController().get_project_path(project_id)
         clean_file_name = self.get_clean_file_name(orig_file_name=orig_file_name)
-        new_file_path = os.path.join(project_path, random_filename + "_" + clean_file_name)
+        new_file_path = os.path.join(project_path, random_key + "_" + clean_file_name)
         
         # Keep regenerating until we find a unique filename (handles rare collisions)
         while os.path.exists(new_file_path):
-            random_filename = self.generate_random_string()
-            new_file_path = os.path.join(project_path, random_filename + "_" + clean_file_name)
+            random_key = self.generate_random_string()
+            new_file_path = os.path.join(project_path, random_key + "_" + clean_file_name)
         
-        return new_file_path
+        return new_file_path,random_key
     
     def get_clean_file_name(self, orig_file_name: str) -> str:
         # Remove all chars except alphanumeric, underscore, and dots

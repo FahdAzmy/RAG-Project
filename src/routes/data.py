@@ -25,7 +25,7 @@ async def upload_data(
     data_controller.validate_upload_file(file)
     
     # Generate unique file path
-    file_path = data_controller.generate_unique_filename(file.filename, project_id)
+    file_path, file_id = data_controller.generate_unique_filepath(file.filename, project_id)
     
     # Save file in chunks (handles large files efficiently)
     try:
@@ -42,5 +42,5 @@ async def upload_data(
     
     return JSONResponse(
         status_code=status.HTTP_200_OK,
-        content={"signal": ResponseSignal.FILE_UPLOADED_SUCCESSFULLY.value}
+        content={"signal": ResponseSignal.FILE_UPLOADED_SUCCESSFULLY.value, "file_id": file_id}
     )
