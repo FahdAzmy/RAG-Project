@@ -4,7 +4,7 @@ from bson import ObjectId
 
 # Database model for a Project
 class Project(BaseModel):
-    _id: Optional[ObjectId] # MongoDB internal ID
+    id: Optional[ObjectId]=Field(None,alias="_id")  # MongoDB internal ID
     project_id: str = Field(..., min_length=1) # User-defined project identifier
     
     # Custom validator for project_id
