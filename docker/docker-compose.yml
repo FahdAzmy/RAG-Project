@@ -9,13 +9,13 @@ services:
     volumes:
       # Persist data in a local folder
       - ./mongodb_data:/data/db
+    environment:
+     - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+     - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
     networks:
       - backend
     restart: always  
 networks:
   backend:
   
-    # environment:
-    #   MONGODB_DATABASE: admin
-    #   MONGODB_USER: admin
-    #   MONGODB_PASSWORD: admin
+ 

@@ -32,3 +32,27 @@ $ cp .env.example .env
 ```
 
 Set your environment variables in the `.env` file. Like `OPENAI_API_KEY` value.
+
+## Running Docker Services
+
+The project uses Docker to manage the database (MongoDB).
+
+1. **Setup Docker Environment Variables**:
+   Create a `.env` file inside the `docker` directory with the following variables:
+   ```env
+   MONGO_INITDB_ROOT_USERNAME=your_username
+   MONGO_INITDB_ROOT_PASSWORD=your_password
+   ```
+
+2. **Start the Services**:
+   Run the following command from the root directory:
+   ```bash
+   docker-compose -f docker/docker-compose.yml up -d
+   ```
+
+3. **Verify Status**:
+   You can check if the container is running using:
+   ```bash
+   docker ps
+   ```
+
