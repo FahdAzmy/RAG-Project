@@ -12,3 +12,18 @@ class DataChunk(BaseModel):
   
     class Config:
          arbitrary_types_allowed = True # Allow BSON ObjectId type
+    @classmethod
+    def get_indexes(cls):
+        """
+        Define the database indexes for the chunks collection.
+        :return: A list of index specifications.
+        """
+        return [
+            {
+                "key": [
+                    ("chunk_project_id", 1)
+                ],
+                "unique": True,
+                "name": "chunk_project_id_index_1"
+            }
+        ]     

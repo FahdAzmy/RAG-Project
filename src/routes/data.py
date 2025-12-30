@@ -25,7 +25,8 @@ async def upload_data(
     file: UploadFile,
     app_settings: Settings = Depends(get_settings)
 ):
-    project_model=ProjectModel(db_client=request.app.db_client)
+    # Initialize the project model and ensure collection/indexes are ready
+    project_model = await ProjectModel.create_instance(db_client=request.app.db_client)
     project = await project_model.get_project_or_create_one(project_id=project_id)
     # Step 1: Validate file type and size to ensure it's allowed
     data_controller = DataController()
@@ -60,8 +61,9 @@ async def process_endpoint(
     app_settings: Settings = Depends(get_settings)
 ):
     # Initialize models with the database client from the application state
-    project_model = ProjectModel(db_client=request.app.db_client)
-    chunk_model = ChunkModel(db_client=request.app.db_client)
+    # Initialize models and ensure collections/indexes are ready
+    project_model = await ProjectModel.create_instance(db_client=request.app.db_client)
+    chunk_model = await ChunkModel.create_instance(db_client=request.app.db_client)
 
     # Ensure the project exists or create a new one
     project = await project_model.get_project_or_create_one(project_id=project_id)

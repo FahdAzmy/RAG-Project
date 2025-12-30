@@ -16,3 +16,18 @@ class Project(BaseModel):
 
     class Config:
          arbitrary_types_allowed = True # Allow BSON ObjectId type
+    @classmethod
+    def get_indexes(cls):
+        """
+        Define the database indexes for the projects collection.
+        :return: A list of index specifications.
+        """
+        return [
+            {
+                "key": [
+                    ("project_id", 1)
+                ],
+                "unique": True,
+                "name": "project_id_index_1"
+            }
+        ]
