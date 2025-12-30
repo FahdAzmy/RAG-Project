@@ -9,7 +9,9 @@ import logging
 from .schemes.data import ProcessRequset
 from src.models.ProjectModel import ProjectModel
 from src.models.ChunkModel import ChunkModel
-from src.models.db_schemes import DataChunk
+from src.models.AssetsModel import AssetsModel
+from src.models.db_schemes import DataChunk,Asset
+from src.models.enums.AssetTypeEnum import AssetTypeEnum
 logger =logging.getLogger("uvicorn.error")
 
 router = APIRouter(
@@ -47,10 +49,23 @@ async def upload_data(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"signal": ResponseSignal.FILE_UPLOADED_FAILED.value}
         )
-    
+    # Store the asset into the database
+    asset_model = await AssetsModel.create_instance(db_client=request.app.db_client)
+    asset = Asset(
+        asset_project_id=project.id,
+        asset_name=file_id,
+        asset_size=os.path.getsize(file_path),
+        asset_type=AssetTypeEnum.FILE.value,
+    )
+    asset_record = await asset_model.create_asset(asset=asset)
+
     return JSONResponse(
         status_code=status.HTTP_200_OK,
-        content={"signal": ResponseSignal.FILE_UPLOADED_SUCCESSFULLY.value, "file_id": file_id,"project_id":str(project_id)}
+        content={
+            "signal": ResponseSignal.FILE_UPLOADED_SUCCESSFULLY.value, 
+            "file_id": str(asset_record.id), 
+            "project_id": str(project_id)
+        }
     )
     
 @router.post("/process/{project_id}")
