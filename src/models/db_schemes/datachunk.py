@@ -9,7 +9,7 @@ class DataChunk(BaseModel):
     chunk_metadata: dict # Associated metadata (e.g., page number)
     chunk_order: int = Field(..., gt=0) # Sequence order of the chunk
     chunk_project_id: ObjectId # Reference to the project it belongs to
-  
+    chunk_asset_id: ObjectId # Reference to the asset it belongs to
     class Config:
          arbitrary_types_allowed = True # Allow BSON ObjectId type
     @classmethod
@@ -23,7 +23,7 @@ class DataChunk(BaseModel):
                 "key": [
                     ("chunk_project_id", 1)
                 ],
-                "unique": True,
+                "unique": False,
                 "name": "chunk_project_id_index_1"
             }
         ]     

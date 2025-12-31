@@ -17,7 +17,9 @@ class ProcessController(BaseController):
     
     def get_file_laoder(self, file_id: str):
         file_extension = self.get_file_extension(file_id)
+        # Construct the full absolute path to the file within the project directory
         file_path = os.path.join(self.project_path, file_id)
+        
 
         # Ensure the file actually exists before trying to load it
         if not os.path.exists(file_path):
@@ -31,10 +33,15 @@ class ProcessController(BaseController):
         else:
             raise ValueError("Unsupported file type", file_extension)
         return None
-    def get_file_content(self, file_id: str):
+    def get_file_content(self, file_id: str): 
         # Initialize the loader and read the file content
         loader = self.get_file_laoder(file_id)
-        return loader.load() 
+        # Return the loader if it was successfully created
+        if loader :
+            return loader.load()
+        
+        # Return None if no suitable loader could be initialized
+        return None      
     def process_file_content(self, file_content: list, file_id: str, chunk_size: int = 200, overlap_size: int = 20):
         # Split the loaded document into smaller chunks for easier processing
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=overlap_size, length_function=len)
