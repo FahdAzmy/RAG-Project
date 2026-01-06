@@ -7,10 +7,15 @@ import logging
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 
-class OpenAiProvider(LLMinterface):
+class OpenRouterProvider(LLMinterface):
     """
-    LLM Provider that uses OpenRouter to access OpenAI models.
+    Unified LLM Provider that uses OpenRouter to access multiple model providers.
     OpenRouter provides an OpenAI-compatible API endpoint.
+
+    Supported models include:
+    - OpenAI models: openai/gpt-4, openai/gpt-3.5-turbo, etc.
+    - Cohere models: cohere/command, cohere/command-r, etc.
+    - And many more providers via OpenRouter
     """
 
     def __init__(
@@ -22,10 +27,10 @@ class OpenAiProvider(LLMinterface):
         default_generation_temperature: float = 0.1,
     ):
         """
-        Initialize the OpenAI provider.
+        Initialize the OpenRouter provider.
 
         Args:
-            api_key (str): The API key for accessing the service.
+            api_key (str): The OpenRouter API key.
             url (str, optional): Base URL for the API. Defaults to OpenRouter if None.
             default_input_max_charracters (int): Max characters for input text.
             default_genertation_max_output_tokens (int): Max tokens for generation.
@@ -45,7 +50,6 @@ class OpenAiProvider(LLMinterface):
         self.embedding_size = None
 
         # Initialize OpenAI client with OpenRouter's base URL
-        # Note: OpenRouter uses 'base_url' parameter (not 'api_url')
         self.client = OpenAI(
             api_key=self.api_key,
             base_url=self.url,
@@ -58,7 +62,10 @@ class OpenAiProvider(LLMinterface):
         Set the model to be used for text generation.
 
         Args:
-            model_id (str): The ID of the model (e.g., 'gpt-3.5-turbo').
+            model_id (str): The OpenRouter model ID.
+                Examples:
+                - OpenAI: 'openai/gpt-4', 'openai/gpt-3.5-turbo'
+                - Cohere: 'cohere/command', 'cohere/command-r', 'cohere/command-r-plus'
         """
         self.generation_model_id = model_id
 
@@ -69,6 +76,9 @@ class OpenAiProvider(LLMinterface):
         Args:
             model_id (str): The ID of the embedding model.
             embedding_size (int): The size of the embedding vector.
+
+        Note: OpenRouter may have limited embedding support.
+              Consider using a dedicated embedding service.
         """
         self.embedding_model_id = model_id
         self.embedding_size = embedding_size
@@ -82,6 +92,7 @@ class OpenAiProvider(LLMinterface):
     ):
         """
         Generate text response based on the prompt and chat history.
+        Works with any model available on OpenRouter (OpenAI, Cohere, etc.)
 
         Args:
             prompt (str): The user input prompt.
@@ -95,6 +106,7 @@ class OpenAiProvider(LLMinterface):
 
         if not self.client:
             self.logger.error("Client not initialized. Please call set_client() first.")
+            return None
         if not self.generation_model_id:
             self.logger.error(
                 "Generation model not set. Please call set_generation_model() first."
@@ -108,12 +120,16 @@ class OpenAiProvider(LLMinterface):
         temperature = (
             temperature if temperature else self.default_generation_temperature
         )
-        chat_history.append(
+
+        # Create a copy of chat_history to avoid modifying the original
+        messages = chat_history.copy()
+        messages.append(
             self.construct_prompt(prompt=prompt, role=OpenAiEnum.USER.value)
         )
+
         response = self.client.chat.completions.create(
             model=self.generation_model_id,
-            messages=chat_history,
+            messages=messages,
             max_tokens=max_output_tokens,
             temperature=temperature,
         )
@@ -134,20 +150,23 @@ class OpenAiProvider(LLMinterface):
 
         Args:
             text (str): The text to embed.
-            document_type (str, optional): Type of document (unused in OpenAI).
+            document_type (str, optional): Type of document (unused in this provider).
 
         Returns:
             list: The embedding vector.
+
+        Note: OpenRouter may have limited embedding support.
+              Consider using a dedicated embedding service like OpenAI directly.
         """
         if not self.client:
             self.logger.error("Client not initialized. Please call set_client() first.")
-            raise None
+            return None
 
         if not self.embedding_model_id:
             self.logger.error(
                 "Embedding model not set. Please call set_embedding_model() first."
             )
-            raise None
+            return None
 
         response = self.client.embeddings.create(
             model=self.embedding_model_id, input=[text]
@@ -160,7 +179,7 @@ class OpenAiProvider(LLMinterface):
             or not response.data[0].embedding
         ):
             self.logger.error("Failed to generate embedding for text: %s", text)
-            raise None
+            return None
         return response.data[0].embedding
 
     def construct_prompt(self, prompt: str, role: str):
